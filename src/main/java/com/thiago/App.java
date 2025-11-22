@@ -17,9 +17,15 @@ public class App {
         System.out.println(seller.toString());
 
         System.out.println("\n===TEST FindById Departmente ===");
-        Department dep = new Department(2L,null);
+        Department dep = new Department(2L, null);
         List<Seller> list = sellerDao.findDepartment(dep);
-        for(Seller obj : list){
+        for (Seller obj : list) {
+            System.out.println(obj.toString());
+        }
+
+        System.out.println("\n===TEST FindById ALL ===");
+        list = sellerDao.findAll();
+        for (Seller obj : list) {
             System.out.println(obj.toString());
         }
     }
