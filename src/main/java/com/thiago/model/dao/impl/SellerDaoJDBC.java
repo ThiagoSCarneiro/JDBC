@@ -19,7 +19,6 @@ public class SellerDaoJDBC implements SellerDao {
         this.conn = conn;
     }
 
-
     @Override
     public void inser(Seller sl) {
         PreparedStatement pstm = null;
