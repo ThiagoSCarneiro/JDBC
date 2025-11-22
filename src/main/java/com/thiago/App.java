@@ -39,7 +39,10 @@ public class App {
         seller.setName("Thiago");
         seller.setEmail("Thiago@GMAIL");
         sellerDao.update(seller);
-        System.out.println("Update Compleate ");
+        System.out.println("Update Completed ");
 
+        System.out.println("\n===TEST delete ===");
+        sellerDao.delete(854);
+        System.out.println("Delete Completed");
     }
 }
