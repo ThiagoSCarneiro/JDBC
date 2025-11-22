@@ -6,10 +6,7 @@ import com.thiago.model.dao.SellerDao;
 import com.thiago.model.entities.Department;
 import com.thiago.model.entities.Seller;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +22,36 @@ public class SellerDaoJDBC implements SellerDao {
 
     @Override
     public void inser(Seller sl) {
+        PreparedStatement pstm = null;
+        try {
+            pstm = conn.prepareStatement(
+                    "INSERT INTO seller "
+                            + "(Name, Email, BirthDate, BaseSalary, DepartmentId) "
+                            + "VALUES ( ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+
+            pstm.setString(1, sl.getName());
+            pstm.setString(2, sl.getEmail());
+            pstm.setDate(3, new java.sql.Date(sl.getBirthDate().getTime()));
+            pstm.setDouble(4, sl.getBaseSalary());
+            pstm.setLong(5, sl.getDepartment().getId());
+
+            int rows = pstm.executeUpdate();
+            if (rows > 0) {
+                ResultSet rs = pstm.getGeneratedKeys();
+                if (rs.next()) {
+                    Long id = rs.getLong(1);
+                    sl.setId(id);
+                }
+                DB.closeResultSet(rs);
+            } else {
+                throw new DbException("Unexpected error, no rows affected");
+            }
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        }finally {
+            DB.closePrepareStatement(pstm);
+
+        }
 
     }
 
