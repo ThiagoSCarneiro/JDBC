@@ -10,7 +10,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SellerDaoJDBC implements SellerDao {
     private Connection conn;
@@ -48,21 +51,14 @@ public class SellerDaoJDBC implements SellerDao {
             pstm.setInt(1, id);
             rs = pstm.executeQuery();
             if (rs.next()) {
-                Department dep = new Department();
-                dep.setId(rs.getLong("DepartmentId"));
-                dep.setName(rs.getString("Name"));
-                Seller sl = new Seller();
-                sl.setId(rs.getLong("Id"));
-                sl.setName(rs.getString("Name"));
-                sl.setBaseSalary(rs.getDouble("BaseSalary"));
-                sl.setBirthDate(rs.getDate("BirthDate"));
-                sl.setDepartment(dep);
+                Department dep = instantiateDepartment(rs);
+                Seller sl = instantiateSeller(rs, dep);
                 return sl;
             }
             return null;
         } catch (SQLException e) {
             throw new DbException(e.getMessage());
-        }finally {
+        } finally {
             DB.closePrepareStatement(pstm);
             DB.closeResultSet(rs);
         }
@@ -75,6 +71,57 @@ public class SellerDaoJDBC implements SellerDao {
 
     @Override
     public List<Seller> findDepartment(Department dp) {
-        return null;
+        PreparedStatement pstm = null;
+        ResultSet rs = null;
+        try {
+            pstm = conn.prepareStatement(
+                    "SELECT seller.*,department.Name as DepName "
+                            + "FROM seller INNER JOIN department "
+                            + "ON seller.DepartmentId = department.Id "
+                            + "WHERE DepartmentId = ? "
+                            + "ORDER BY Name");
+
+            pstm.setLong(1, dp.getId());
+            rs = pstm.executeQuery();
+
+            List<Seller> list = new ArrayList<>();
+            Map<Integer, Department> map = new HashMap<>();
+            while (rs.next()) {
+
+                Department dep = map.get(rs.getInt("DepartmentId"));
+
+                if (dep == null) {
+                    dep = instantiateDepartment(rs);
+                    map.put(rs.getInt("DepartmentId"), dep);
+                }
+
+                Seller sl = instantiateSeller(rs, dep);
+                list.add(sl);
+            }
+            return list;
+
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        } finally {
+            DB.closePrepareStatement(pstm);
+            DB.closeResultSet(rs);
+        }
+    }
+
+    private Seller instantiateSeller(ResultSet rs, Department dep) throws SQLException {
+        Seller sl = new Seller();
+        sl.setId(rs.getLong("Id"));
+        sl.setName(rs.getString("Name"));
+        sl.setBaseSalary(rs.getDouble("BaseSalary"));
+        sl.setBirthDate(rs.getDate("BirthDate"));
+        sl.setDepartment(dep);
+        return sl;
+    }
+
+    private Department instantiateDepartment(ResultSet rs) throws SQLException {
+        Department dep = new Department();
+        dep.setId(rs.getLong("DepartmentId"));
+        dep.setName(rs.getString("Name"));
+        return dep;
     }
 }
